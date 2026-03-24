@@ -22,6 +22,7 @@ export type ModuleRuntimeItem = {
   title: string;
   detail: string;
   meta?: string;
+  href?: string;
   statusLabel?: string;
   statusTone?: "pending" | "success" | "high" | "medium" | "critical";
 };
@@ -80,6 +81,10 @@ function formatPercent(value: number | null) {
 
 function humanizeStatus(value: string) {
   return value.replaceAll("_", " ");
+}
+
+function buildSkuHref(externalVariantId: string) {
+  return `/sku/${encodeURIComponent(externalVariantId)}`;
 }
 
 function mergeModes(modes: ApiMode[]): ApiMode {
@@ -201,6 +206,7 @@ export async function getModuleRuntime(slug: string): Promise<ModuleRuntime> {
               title: item.sku ?? item.externalVariantId,
               detail: `${item.productTitle} · ${formatCount(item.availableInventory)} on hand · ${formatCount(item.unitsSold30d)} sold in the last 30 days`,
               meta: `Orders ${formatCount(item.ordersCount)} · Price ${formatCurrency(item.currentPrice)} · Last order ${formatDate(item.lastOrderedAt)}`,
+              href: buildSkuHref(item.externalVariantId),
               statusLabel: inventoryLabel(item),
               statusTone: inventoryTone(item)
             }))
@@ -216,6 +222,7 @@ export async function getModuleRuntime(slug: string): Promise<ModuleRuntime> {
                 title: item.sku ?? item.externalVariantId,
                 detail: `Pricing ${item.pricingStatus ?? "not queued"} · Catalog ${item.catalogStatus ?? "not started"}`,
                 meta: `Recommended ${formatCurrency(item.recommendedPrice)} · Provider ${item.catalogProvider ?? "not configured"}`,
+                href: buildSkuHref(item.externalVariantId),
                 statusLabel:
                   item.catalogStatus === "pending_provider_config"
                     ? "provider blocked"
@@ -271,6 +278,7 @@ export async function getModuleRuntime(slug: string): Promise<ModuleRuntime> {
               title: item.sku ?? item.externalVariantId,
               detail: `${item.productTitle} · ${formatCount(item.availableInventory)} available · ${formatCount(item.unitsSold30d)} sold / 30d`,
               meta: `Orders ${formatCount(item.ordersCount)} · Last order ${formatDate(item.lastOrderedAt)}`,
+              href: buildSkuHref(item.externalVariantId),
               statusLabel: inventoryLabel(item),
               statusTone: inventoryTone(item)
             }))
@@ -283,6 +291,7 @@ export async function getModuleRuntime(slug: string): Promise<ModuleRuntime> {
               title: item.sku ?? item.externalVariantId,
               detail: `${item.productTitle} · ${formatCount(item.availableInventory)} still on hand with no sales yet`,
               meta: `Current price ${formatCurrency(item.currentPrice)} · Pricing ${item.pricingStatus ?? "not queued"}`,
+              href: buildSkuHref(item.externalVariantId),
               statusLabel: "stale stock",
               statusTone: "medium"
             }))
@@ -323,6 +332,7 @@ export async function getModuleRuntime(slug: string): Promise<ModuleRuntime> {
               title: item.sku ?? item.externalVariantId,
               detail: `${formatCurrency(item.currentPrice)} to ${formatCurrency(item.recommendedPrice)}`,
               meta: `Confidence ${formatPercent(item.confidenceScore)} · Change ${formatPercent(item.changePercent)} · Created ${formatDate(item.createdAt)}`,
+              href: buildSkuHref(item.externalVariantId),
               statusLabel: humanizeStatus(item.status),
               statusTone: syncTone(item.status)
             }))

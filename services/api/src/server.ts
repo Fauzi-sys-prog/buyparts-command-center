@@ -20,6 +20,7 @@ export function buildServer() {
         "/modules",
         "/dashboard/summary",
         "/sku/overview",
+        "/sku/variants/:externalVariantId",
         "/pricing/recommendations",
         "/catalog/enrichment-runs",
         "/alerts",

@@ -149,7 +149,9 @@ export async function DashboardHome() {
               summary.recentPricingRecommendations.map((item) => (
                 <div key={item.id} className="list-card">
                   <div className="list-card-header">
-                    <strong>{item.sku ?? item.externalVariantId}</strong>
+                    <Link href={`/sku/${encodeURIComponent(item.externalVariantId)}`} className="text-link">
+                      <strong>{item.sku ?? item.externalVariantId}</strong>
+                    </Link>
                     <span className={`status-pill status-${item.status}`}>{item.status}</span>
                   </div>
                   <p>

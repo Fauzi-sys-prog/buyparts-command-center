@@ -3,6 +3,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { isPostgresConfigured } from "../config/env.js";
 import {
   getDashboardReadModel,
+  getSkuDetail,
   listAlerts,
   listCatalogEnrichmentRuns,
   listPricingRecommendations,
@@ -210,6 +211,41 @@ export const dashboardRoute: FastifyPluginAsync = async (app) => {
         total: 0,
         items: [],
         reason: error instanceof Error ? error.message : "Unable to read SKU overview."
+      });
+    }
+  });
+
+  app.get<{ Params: { externalVariantId: string } }>("/sku/variants/:externalVariantId", async (request, reply) => {
+    if (!isPostgresConfigured()) {
+      return {
+        mode: "preview",
+        item: null,
+        reason: "POSTGRES_URL is not configured yet."
+      };
+    }
+
+    try {
+      const item = await getSkuDetail(request.params.externalVariantId);
+
+      if (!item) {
+        return reply.code(404).send({
+          mode: "live",
+          item: null,
+          reason: `Unknown SKU variant: ${request.params.externalVariantId}`
+        });
+      }
+
+      return {
+        mode: "live",
+        item
+      };
+    } catch (error) {
+      app.log.error(error);
+
+      return reply.code(200).send({
+        mode: "degraded",
+        item: null,
+        reason: error instanceof Error ? error.message : "Unable to read SKU detail."
       });
     }
   });

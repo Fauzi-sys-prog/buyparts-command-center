@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { ModuleContent } from "@/lib/module-content";
 import type { ModuleRuntime } from "@/lib/module-runtime";
 
@@ -116,7 +118,13 @@ export function ModuleView({ module, runtime }: ModuleViewProps) {
               section.items.map((item) => (
                 <div key={`${section.title}-${item.title}-${item.meta ?? ""}`} className="list-card">
                   <div className="list-card-header">
-                    <strong>{item.title}</strong>
+                    {item.href ? (
+                      <Link href={item.href} className="text-link">
+                        <strong>{item.title}</strong>
+                      </Link>
+                    ) : (
+                      <strong>{item.title}</strong>
+                    )}
                     {item.statusLabel ? (
                       <span
                         className={`status-pill${

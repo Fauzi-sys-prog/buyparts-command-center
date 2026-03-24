@@ -80,6 +80,64 @@ export type SkuOverviewItem = {
   catalogProvider: string | null;
 };
 
+export type SkuDetailSummary = SkuOverviewItem & {
+  barcode: string | null;
+  productStatus: string;
+  tags: string[];
+  compareAtPrice: number | null;
+  tracked: boolean | null;
+  inventoryPolicy: string | null;
+};
+
+export type SkuOrderHistoryItem = {
+  externalOrderId: string;
+  orderNumber: string | null;
+  orderedAt: string | null;
+  financialStatus: string | null;
+  fulfillmentStatus: string | null;
+  quantity: number;
+  unitPrice: number | null;
+  lineTotal: number | null;
+};
+
+export type SkuInventoryHistoryItem = {
+  id: string;
+  available: number;
+  committed: number | null;
+  incoming: number | null;
+  onHand: number | null;
+  capturedAt: string;
+};
+
+export type SkuPricingHistoryItem = {
+  id: string;
+  currentPrice: number | null;
+  recommendedPrice: number;
+  confidenceScore: number | null;
+  status: string;
+  reasons: string[];
+  createdAt: string;
+  reviewedAt: string | null;
+};
+
+export type SkuCatalogHistoryItem = {
+  id: string;
+  status: string;
+  provider: string | null;
+  promptVersion: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  errorMessage: string | null;
+};
+
+export type SkuDetail = {
+  summary: SkuDetailSummary;
+  orderHistory: SkuOrderHistoryItem[];
+  inventoryHistory: SkuInventoryHistoryItem[];
+  pricingHistory: SkuPricingHistoryItem[];
+  catalogHistory: SkuCatalogHistoryItem[];
+};
+
 export type IntegrationSummary = {
   total: number;
   configured: number;
@@ -135,6 +193,13 @@ export type ListResponse<T> = {
   total: number;
   items: T[];
   reason?: string;
+};
+
+export type ItemResponse<T> = {
+  mode: ApiMode;
+  item: T | null;
+  reason?: string;
+  notFound?: boolean;
 };
 
 function getApiBaseUrl() {
@@ -244,6 +309,14 @@ function getFallbackShopifyStatus(): ShopifyStatusResponse {
   };
 }
 
+function getFallbackItem<T>(reason: string): ItemResponse<T> {
+  return {
+    mode: "preview",
+    item: null,
+    reason
+  };
+}
+
 export async function getDashboardSummary(): Promise<DashboardSummary> {
   return fetchApi(
     "/dashboard/summary",
@@ -300,4 +373,36 @@ export async function getShopifyStatus() {
     "/integrations/shopify/status",
     getFallbackShopifyStatus()
   );
+}
+
+export async function getSkuDetail(externalVariantId: string): Promise<ItemResponse<SkuDetail>> {
+  try {
+    const response = await fetch(
+      `${getApiBaseUrl()}/sku/variants/${encodeURIComponent(externalVariantId)}`,
+      {
+        cache: "no-store"
+      }
+    );
+
+    if (response.status === 404) {
+      const payload = (await response.json()) as ItemResponse<SkuDetail>;
+
+      return {
+        mode: payload.mode,
+        item: null,
+        reason: payload.reason ?? "SKU detail was not found.",
+        notFound: true
+      };
+    }
+
+    if (!response.ok) {
+      throw new Error(`SKU API returned ${response.status}`);
+    }
+
+    return (await response.json()) as ItemResponse<SkuDetail>;
+  } catch (error) {
+    return getFallbackItem(
+      error instanceof Error ? error.message : "SKU detail API is unavailable."
+    );
+  }
 }
