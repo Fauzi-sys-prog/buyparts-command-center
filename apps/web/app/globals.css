@@ -151,6 +151,82 @@ a {
   font-weight: 600;
 }
 
+.status-indicator {
+  min-width: 210px;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.status-indicator span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.status-indicator strong {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: 0.95rem;
+}
+
+.status-indicator.is-live {
+  border-color: rgba(74, 222, 128, 0.28);
+}
+
+.status-indicator.is-preview,
+.status-indicator.is-degraded {
+  border-color: rgba(255, 122, 26, 0.24);
+}
+
+.banner-card {
+  padding: 1rem;
+  border: 1px solid rgba(255, 122, 26, 0.18);
+  border-radius: 1rem;
+  background: rgba(255, 122, 26, 0.06);
+}
+
+.banner-card strong {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.banner-card p,
+.list-meta {
+  color: var(--muted);
+}
+
+.status-pending,
+.status-pending_provider_config,
+.status-planned {
+  background: rgba(255, 122, 26, 0.12);
+  color: #ffd7bb;
+}
+
+.status-success,
+.status-completed,
+.status-open,
+.status-low {
+  background: rgba(74, 222, 128, 0.16);
+  color: #b8f3cc;
+}
+
+.status-failed,
+.status-high,
+.status-critical {
+  background: rgba(248, 113, 113, 0.14);
+  color: #fecaca;
+}
+
+.status-medium,
+.status-processing {
+  background: rgba(96, 165, 250, 0.16);
+  color: #bfdbfe;
+}
+
 .sidebar-footer {
   margin-top: auto;
   padding: 1rem;
@@ -196,6 +272,14 @@ a {
   padding: 1.5rem;
 }
 
+.hero-header,
+.list-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
 .hero-copy {
   max-width: 60rem;
   margin-top: 0.85rem;
@@ -212,6 +296,10 @@ a {
 .metrics-grid,
 .module-summary {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.compact-grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }
 
 .pipeline-grid {
@@ -319,6 +407,11 @@ a {
   .topbar {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .hero-header,
+  .list-card-header {
+    flex-direction: column;
   }
 
   .hero-card,

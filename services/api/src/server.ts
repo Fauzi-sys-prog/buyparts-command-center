@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 
+import { dashboardRoute } from "./routes/dashboard.js";
 import { integrationsRoute } from "./routes/integrations.js";
 import { healthRoute } from "./routes/health.js";
 import { modulesRoute } from "./routes/modules.js";
@@ -17,6 +18,10 @@ export function buildServer() {
       endpoints: [
         "/health",
         "/modules",
+        "/dashboard/summary",
+        "/pricing/recommendations",
+        "/catalog/enrichment-runs",
+        "/alerts",
         "/integrations/readiness",
         "/integrations/shopify/status"
       ]
@@ -25,6 +30,7 @@ export function buildServer() {
 
   app.register(healthRoute);
   app.register(modulesRoute);
+  app.register(dashboardRoute);
   app.register(integrationsRoute);
   app.register(shopifyRoute);
 
