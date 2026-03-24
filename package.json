@@ -1,0 +1,21 @@
+{
+  "name": "buyparts-command-center",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "services/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace @buyparts/web run dev",
+    "dev:api": "npm --workspace @buyparts/api run dev",
+    "build:web": "npm --workspace @buyparts/web run build",
+    "build:api": "npm --workspace @buyparts/api run build",
+    "check:worker": "python3 -m compileall services/worker/src",
+    "db:apply": "psql \"$POSTGRES_URL\" -f services/api/db/schema.sql",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "verify": "npm run typecheck && npm run build:api && npm run build:web && npm run check:worker"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

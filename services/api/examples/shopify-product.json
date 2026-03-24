@@ -1,0 +1,26 @@
+{
+  "id": 9123456789012,
+  "title": "Brake Pad Kit Front",
+  "handle": "brake-pad-kit-front",
+  "vendor": "BuyParts",
+  "product_type": "Brake System",
+  "status": "active",
+  "tags": "brake,pad,front,toyota",
+  "variants": [
+    {
+      "id": 4123456789012,
+      "product_id": 9123456789012,
+      "title": "Default Title",
+      "sku": "BP-BRAKE-001",
+      "barcode": "8999990001112",
+      "price": "49.90",
+      "compare_at_price": "54.90",
+      "inventory_item_id": 5123456789012,
+      "inventory_quantity": 18,
+      "inventory_policy": "deny",
+      "taxable": true,
+      "tracked": true,
+      "option1": "Standard"
+    }
+  ]
+}

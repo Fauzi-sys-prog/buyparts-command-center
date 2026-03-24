@@ -1,0 +1,64 @@
+name: Delivery Artifacts
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - develop
+
+concurrency:
+  group: delivery-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build release assets
+        run: npm run verify
+
+      - name: Upload API artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: buyparts-api-dist-${{ github.sha }}
+          path: |
+            services/api/dist
+            services/api/package.json
+          if-no-files-found: error
+
+      - name: Upload web artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: buyparts-web-build-${{ github.sha }}
+          path: |
+            apps/web/.next
+            apps/web/package.json
+            package-lock.json
+          if-no-files-found: error
+
+      - name: Deployment note
+        run: |
+          echo "Artifacts are ready."
+          echo "Wire this workflow to Vercel, Render, Railway, Fly.io, or your preferred target in the next step."
