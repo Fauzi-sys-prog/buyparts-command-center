@@ -4,6 +4,16 @@
 
 BuyParts Command Center is an internal operations and growth platform, not a customer storefront. Its job is to help the team make better decisions per SKU across catalog quality, pricing, inventory, and channel performance.
 
+The target architecture follows the intended hiring stack:
+
+- `Node.js` API for integrations and operational workflows
+- `PostgreSQL` for transactional and operational data
+- `Python` for autonomous systems and AI-heavy jobs
+- `Shopify` as the commerce control plane
+- `BigQuery` as the warehouse and analytics layer
+- `LLM + RAG + LangChain` for enrichment, knowledge retrieval, and operator assistance
+- `Google Ads` and `Merchant Center` as growth channel integrations once SKU economics are trustworthy
+
 ## Bounded contexts
 
 ### 1. Commerce ingestion

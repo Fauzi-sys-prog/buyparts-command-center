@@ -8,6 +8,10 @@ Python jobs live here for anything that is batch-oriented, AI-assisted, or easie
 - Pricing recommendation batches
 - Inventory tagging
 - Supplier payload normalization
+- BigQuery warehouse sync
+- Google Ads performance joins
+- RAG indexing and retrieval prep
+- LangChain-assisted catalog workflows
 
 ## Suggested local setup
 

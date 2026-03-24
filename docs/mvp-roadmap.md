@@ -30,3 +30,4 @@
 - Mirror facts into BigQuery
 - Join ad performance to SKU economics
 - Add merchant feed diagnostics and campaign prioritization
+- Introduce RAG and LangChain flows for catalog and operator assist use cases

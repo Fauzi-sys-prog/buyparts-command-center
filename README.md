@@ -2,6 +2,19 @@
 
 Starter monorepo for the internal BuyParts.Online operations platform. This scaffold is designed around the MVP we discussed: centralize Shopify data, expose operational APIs, and prepare worker jobs for pricing and catalog intelligence.
 
+## Target stack alignment
+
+This repository is intentionally aligned to the target stack from the BuyParts.Online role:
+
+- `JavaScript / Node.js`: dashboard and operational API
+- `PostgreSQL / SQL`: operational data store, sync logs, pricing rules, order and SKU data
+- `Python`: autonomous jobs for pricing, inventory tagging, enrichment, and warehouse sync
+- `Shopify`: primary commerce source for products, variants, inventory, and orders
+- `Google BigQuery`: downstream warehouse layer for large-scale analytics and ads joins
+- `AI / LLM`: catalog enrichment and recommendation generation
+- `API Integration`: Shopify, suppliers, Google Ads, Merchant Center
+- `RAG / LangChain`: future retrieval pipelines for manufacturer data, catalog context, and operator assist tools
+
 ## Workspace layout
 
 - `apps/web`: Next.js dashboard shell for the Industrial Command Center UI
@@ -45,4 +58,4 @@ Starter monorepo for the internal BuyParts.Online operations platform. This scaf
 
 See [docs/github-flow.md](docs/github-flow.md) for the branch and pull request flow.
 
-See [docs/architecture.md](docs/architecture.md), [docs/mvp-roadmap.md](docs/mvp-roadmap.md), and [docs/shopify-ingestion.md](docs/shopify-ingestion.md) for the planning layer behind this scaffold.
+See [docs/architecture.md](docs/architecture.md), [docs/mvp-roadmap.md](docs/mvp-roadmap.md), [docs/shopify-ingestion.md](docs/shopify-ingestion.md), and [docs/stack-alignment.md](docs/stack-alignment.md) for the planning layer behind this scaffold.
