@@ -80,7 +80,7 @@ The product concept is:
 
 - BigQuery export and warehouse models
 - live Google Ads and Merchant Center connectors after credentials are available
-- supplier API normalization
-- LLM enrichment pipeline with provider integration
-- RAG indexing and retrieval workflow
+- live supplier API normalization after credentials are available
+- live LLM enrichment pipeline with provider integration
+- live RAG indexing and retrieval workflow
 - LangChain-driven multi-step catalog assistant flows
