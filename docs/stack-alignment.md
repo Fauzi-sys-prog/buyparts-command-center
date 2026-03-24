@@ -79,7 +79,7 @@ The product concept is:
 ## What still needs to be built
 
 - BigQuery export and warehouse models
-- Google Ads and Merchant Center connectors
+- live Google Ads and Merchant Center connectors after credentials are available
 - supplier API normalization
 - LLM enrichment pipeline with provider integration
 - RAG indexing and retrieval workflow

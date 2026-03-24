@@ -69,6 +69,11 @@ export function getIntegrationReadinessCatalog(): IntegrationReadiness[] {
   const env = getEnv();
   const bigqueryAuthConfigured =
     hasEnvValue(env.bigqueryServiceAccountJson) || hasEnvValue(env.googleApplicationCredentials);
+  const googleAdsOauthConfigured =
+    hasEnvValue(env.googleAdsClientId) &&
+    hasEnvValue(env.googleAdsClientSecret) &&
+    hasEnvValue(env.googleAdsRefreshToken);
+  const googleAdsAuthConfigured = bigqueryAuthConfigured || googleAdsOauthConfigured;
   const vectorConfigured =
     hasEnvValue(env.vectorStoreProvider) &&
     hasEnvValue(env.vectorStoreUrl) &&
@@ -132,17 +137,27 @@ export function getIntegrationReadinessCatalog(): IntegrationReadiness[] {
       requiredEnv: [
         "GOOGLE_ADS_DEVELOPER_TOKEN",
         "GOOGLE_ADS_CUSTOMER_ID",
-        "GOOGLE_ADS_LOGIN_CUSTOMER_ID"
+        "GOOGLE_ADS_LOGIN_CUSTOMER_ID",
+        "GOOGLE_ADS_AUTH"
       ],
       configuredEnv: [
         hasEnvValue(env.googleAdsDeveloperToken) ? "GOOGLE_ADS_DEVELOPER_TOKEN" : "",
         hasEnvValue(env.googleAdsCustomerId) ? "GOOGLE_ADS_CUSTOMER_ID" : "",
-        hasEnvValue(env.googleAdsLoginCustomerId) ? "GOOGLE_ADS_LOGIN_CUSTOMER_ID" : ""
+        hasEnvValue(env.googleAdsLoginCustomerId) ? "GOOGLE_ADS_LOGIN_CUSTOMER_ID" : "",
+        googleAdsAuthConfigured ? "GOOGLE_ADS_AUTH" : ""
       ].filter(Boolean),
+      optionalEnv: [
+        "GOOGLE_APPLICATION_CREDENTIALS",
+        "BIGQUERY_SERVICE_ACCOUNT_JSON",
+        "GOOGLE_ADS_CLIENT_ID",
+        "GOOGLE_ADS_CLIENT_SECRET",
+        "GOOGLE_ADS_REFRESH_TOKEN"
+      ],
       manualSteps: [
         "Create or use a Google Ads manager account.",
         "Request a developer token.",
-        "Collect the login customer ID and target customer ID."
+        "Collect the login customer ID and target customer ID.",
+        "Choose an auth flow: service account credentials or OAuth client credentials plus refresh token."
       ]
     }),
     buildReadiness({

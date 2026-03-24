@@ -16,6 +16,13 @@ class WorkerSettings:
     bigquery_location: str
     bigquery_service_account_json: str
     google_application_credentials: str
+    google_ads_developer_token: str
+    google_ads_customer_id: str
+    google_ads_login_customer_id: str
+    google_ads_client_id: str
+    google_ads_client_secret: str
+    google_ads_refresh_token: str
+    google_merchant_id: str
 
     @classmethod
     def from_env(cls) -> "WorkerSettings":
@@ -26,11 +33,22 @@ class WorkerSettings:
             bigquery_location=_env("BIGQUERY_LOCATION", "US"),
             bigquery_service_account_json=_env("BIGQUERY_SERVICE_ACCOUNT_JSON"),
             google_application_credentials=_env("GOOGLE_APPLICATION_CREDENTIALS"),
+            google_ads_developer_token=_env("GOOGLE_ADS_DEVELOPER_TOKEN"),
+            google_ads_customer_id=_env("GOOGLE_ADS_CUSTOMER_ID"),
+            google_ads_login_customer_id=_env("GOOGLE_ADS_LOGIN_CUSTOMER_ID"),
+            google_ads_client_id=_env("GOOGLE_ADS_CLIENT_ID"),
+            google_ads_client_secret=_env("GOOGLE_ADS_CLIENT_SECRET"),
+            google_ads_refresh_token=_env("GOOGLE_ADS_REFRESH_TOKEN"),
+            google_merchant_id=_env("GOOGLE_MERCHANT_ID"),
         )
 
     @property
-    def bigquery_auth_configured(self) -> bool:
+    def google_auth_configured(self) -> bool:
         return bool(self.bigquery_service_account_json or self.google_application_credentials)
+
+    @property
+    def bigquery_auth_configured(self) -> bool:
+        return self.google_auth_configured
 
     @property
     def bigquery_ready(self) -> bool:
