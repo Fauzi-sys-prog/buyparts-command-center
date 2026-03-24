@@ -136,14 +136,16 @@ export const moduleContent: Record<string, ModuleContent> = {
       "One place to triage failed syncs, pricing anomalies, and inventory exceptions before they become revenue problems.",
     maturity: "MVP priority",
     owners: ["Operations", "Engineering"],
-    dataSources: ["Sync failures", "Pricing rules", "Inventory thresholds"],
+    dataSources: ["Sync failures", "Pricing rules", "Inventory thresholds", "Operator activity"],
     outputs: [
       "Severity-based alert queue",
+      "Operator decision feed",
       "Incident ownership",
       "Resolution notes"
     ],
     firstBuilds: [
       "Alert timeline",
+      "Operator activity context",
       "Assignee and status fields",
       "Quick actions for retries"
     ]

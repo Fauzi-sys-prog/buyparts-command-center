@@ -1,3 +1,5 @@
+import { FormSubmitButton } from "@/components/form-submit-button";
+import { OperatorProfileHiddenInput } from "@/components/operator-profile-hidden-input";
 import {
   cancelCatalogRunAction,
   queueCatalogRunAction
@@ -15,14 +17,20 @@ export function CatalogRunActions({ runId, returnPath }: CatalogRunActionsProps)
   return (
     <div className="action-row">
       <form action={queueAction} className="action-form">
-        <button type="submit" className="action-button action-queue">
-          Queue
-        </button>
+        <OperatorProfileHiddenInput />
+        <FormSubmitButton
+          className="action-button action-queue"
+          idleLabel="Queue"
+          pendingLabel="Queueing..."
+        />
       </form>
       <form action={cancelAction} className="action-form">
-        <button type="submit" className="action-button action-reject">
-          Cancel
-        </button>
+        <OperatorProfileHiddenInput />
+        <FormSubmitButton
+          className="action-button action-reject"
+          idleLabel="Cancel"
+          pendingLabel="Cancelling..."
+        />
       </form>
     </div>
   );

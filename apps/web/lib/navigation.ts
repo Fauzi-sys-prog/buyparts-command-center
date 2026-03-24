@@ -1,7 +1,10 @@
 export type NavigationItem = {
   href: string;
   label: string;
+  navLabel?: string;
   caption: string;
+  shortLabel: string;
+  section: "Overview" | "Operations" | "Platform";
   badge?: string;
 };
 
@@ -9,51 +12,80 @@ export const navigationItems: NavigationItem[] = [
   {
     href: "/",
     label: "Executive Dashboard",
+    navLabel: "Dashboard",
     caption: "Revenue, margin, stock risk, sync health",
+    shortLabel: "DB",
+    section: "Overview",
     badge: "Phase 1"
   },
   {
     href: "/modules/sku-intelligence",
     label: "SKU Intelligence",
-    caption: "Velocity, margin, and catalog quality"
+    navLabel: "SKU Intelligence",
+    caption: "Velocity, margin, and catalog quality",
+    shortLabel: "SK",
+    section: "Operations"
   },
   {
     href: "/modules/pricing-engine",
     label: "Pricing Engine",
-    caption: "Recommendations, guardrails, approvals"
+    navLabel: "Pricing",
+    caption: "Recommendations, guardrails, approvals",
+    shortLabel: "PR",
+    section: "Operations"
   },
   {
     href: "/modules/inventory-control",
     label: "Inventory Control",
-    caption: "Low stock, dead stock, reorder signals"
+    navLabel: "Inventory",
+    caption: "Low stock, dead stock, reorder signals",
+    shortLabel: "IV",
+    section: "Operations"
   },
   {
     href: "/modules/catalog-ai",
     label: "Catalog AI",
-    caption: "Title, specs, and attribute enrichment"
+    navLabel: "Catalog AI",
+    caption: "Title, specs, and attribute enrichment",
+    shortLabel: "CG",
+    section: "Operations"
   },
   {
     href: "/modules/integrations",
     label: "Integrations Hub",
-    caption: "Shopify, supplier, and warehouse syncs"
+    navLabel: "Integrations",
+    caption: "Shopify, supplier, and warehouse syncs",
+    shortLabel: "IN",
+    section: "Platform"
   },
   {
     href: "/modules/growth-ads",
     label: "Growth & Ads",
+    navLabel: "Growth Ads",
     caption: "Future join between spend and SKU profit",
+    shortLabel: "GR",
+    section: "Platform",
     badge: "Later"
   },
   {
     href: "/modules/alerts",
     label: "Alerts Center",
-    caption: "Operational exceptions and approvals"
+    navLabel: "Alerts",
+    caption: "Operational exceptions and approvals",
+    shortLabel: "AL",
+    section: "Platform"
   },
   {
     href: "/modules/settings",
     label: "Settings & Rules",
-    caption: "Automation controls and credentials"
+    navLabel: "Settings",
+    caption: "Automation controls and credentials",
+    shortLabel: "ST",
+    section: "Platform"
   }
 ];
+
+export const navigationSections = ["Overview", "Operations", "Platform"] as const;
 
 export const dashboardMetrics = [
   {

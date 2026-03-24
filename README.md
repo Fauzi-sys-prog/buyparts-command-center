@@ -1,6 +1,13 @@
 # BuyParts Command Center
 
-Starter monorepo for the internal BuyParts.Online operations platform. This scaffold is designed around the MVP we discussed: centralize Shopify data, expose operational APIs, and prepare worker jobs for pricing and catalog intelligence.
+Monorepo for the internal BuyParts.Online operations platform. This repo is no longer just a starter scaffold: it now includes a working local MVP with an executive dashboard, SKU detail flow, catalog review flow, pricing review actions, operator activity feed, and PostgreSQL-backed read models.
+
+Current product position:
+
+- Internal command center for pricing, catalog, inventory, and integrations
+- Built to align with the BuyParts.Online "Brain" concept from the target role
+- No customer storefront in this repo
+- No login required yet for the MVP; operator identity is stored locally in the browser
 
 ## Target stack alignment
 
@@ -17,12 +24,12 @@ This repository is intentionally aligned to the target stack from the BuyParts.O
 
 ## Workspace layout
 
-- `apps/web`: Next.js dashboard shell for the Industrial Command Center UI
-- `services/api`: Node.js API for health, module metadata, and future Shopify integrations
-- `services/worker`: Python worker for pricing, enrichment, and scheduled jobs
-- `docs`: architecture notes, module map, and rollout guidance
+- `apps/web`: Next.js internal dashboard and review surfaces
+- `services/api`: Node.js API, Shopify ingestion routes, read models, and review actions
+- `services/worker`: Python worker scaffolding for pricing, enrichment, BigQuery, Google Ads, supplier sync, and RAG
+- `docs`: architecture notes, rollout guidance, and setup plans
 
-## Product modules
+## MVP surfaces
 
 - Executive Dashboard
 - SKU Intelligence
@@ -34,29 +41,66 @@ This repository is intentionally aligned to the target stack from the BuyParts.O
 - Alerts Center
 - Settings & Rules
 
-## Getting started
+## What already works locally
+
+- Shopify webhook ingestion persists products, variants, orders, sync runs, and receipts into PostgreSQL
+- Dashboard reads live summary data from the API
+- Pricing recommendations can be approved or rejected
+- Catalog enrichment runs can be queued or cancelled
+- SKU detail pages show order, inventory, pricing, and catalog history
+- Catalog review pages support notes, checklist state, and review activity
+- Operator activity shows up across dashboard and module surfaces
+- Integration readiness endpoints show which external providers still need manual setup
+
+## Getting started locally
 
 1. Copy `.env.example` to `.env` and fill in credentials as they become available.
 2. Start PostgreSQL locally with `docker compose up -d postgres`.
 3. Install JavaScript dependencies with `npm install`.
 4. Apply the API schema with `npm run db:apply`.
-5. Create a Python virtual environment inside `services/worker` when we are ready to implement jobs.
+5. Start the API:
+   `API_PORT=4005 POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/buyparts npm --workspace @buyparts/api run start`
+6. Start the web app:
+   `PORT=3005 API_BASE_URL=http://127.0.0.1:4005 npm --workspace @buyparts/web run start`
 
-## Immediate next build steps
+Open:
 
-1. Wire the web dashboard to the API module endpoints.
-2. Apply [services/api/db/schema.sql](services/api/db/schema.sql) to local PostgreSQL.
-3. Install dependencies and start the API to test real Shopify webhook persistence.
-4. Move pricing and catalog enrichment logic into the worker with auditable job runs.
+- Dashboard: `http://localhost:3005`
+- Pricing module: `http://localhost:3005/modules/pricing-engine`
+- Catalog module: `http://localhost:3005/modules/catalog-ai`
+- Demo SKU: `http://localhost:3005/sku/4123456789012`
+- Demo catalog review: `http://localhost:3005/catalog/runs/59570234-6c1a-4317-b40a-310ee3a85101`
 
-## Manual setup checkpoints
+## Demo flow
 
-The API now exposes a readiness map for every external integration:
+Suggested recruiter or demo flow:
+
+1. Open the Executive Dashboard and show the command-center overview.
+2. Open the Pricing Engine queue and approve/reject seeded recommendations.
+3. Open a live SKU detail page and walk through decision history.
+4. Open a catalog review run and show review notes, checklist, and payload context.
+5. Open Settings/Readiness to explain what is already scaffolded vs. what still needs provider credentials.
+
+See [docs/demo-walkthrough.md](docs/demo-walkthrough.md) for a more detailed walkthrough.
+
+## What still needs live credentials
+
+The API already exposes a readiness map for every external integration:
 
 - `GET /integrations/readiness`
 - `GET /integrations/readiness/:id`
 
-Use that readiness view to see exactly which env vars are still missing before we wire a live provider.
+The main integrations that still require manual setup are:
+
+- `Shopify`
+- `Google BigQuery / Google Cloud`
+- `Google Ads`
+- `Google Merchant Center`
+- `LLM provider`
+- `Supplier API`
+- `RAG / embeddings / vector store`
+
+Use the readiness view or [docs/manual-setup-checklist.md](docs/manual-setup-checklist.md) to see exactly which env vars are still missing before wiring a live provider.
 
 ## GitHub workflow
 
@@ -67,4 +111,4 @@ Use that readiness view to see exactly which env vars are still missing before w
 
 See [docs/github-flow.md](docs/github-flow.md) for the branch and pull request flow.
 
-See [docs/architecture.md](docs/architecture.md), [docs/mvp-roadmap.md](docs/mvp-roadmap.md), [docs/shopify-ingestion.md](docs/shopify-ingestion.md), [docs/stack-alignment.md](docs/stack-alignment.md), [docs/manual-setup-checklist.md](docs/manual-setup-checklist.md), [docs/bigquery-warehouse-plan.md](docs/bigquery-warehouse-plan.md), [docs/growth-channels-plan.md](docs/growth-channels-plan.md), [docs/supplier-integration-plan.md](docs/supplier-integration-plan.md), [docs/ai-runtime-plan.md](docs/ai-runtime-plan.md), and [docs/worker-persistence-plan.md](docs/worker-persistence-plan.md) for the planning layer behind this scaffold.
+See [docs/architecture.md](docs/architecture.md), [docs/mvp-roadmap.md](docs/mvp-roadmap.md), [docs/shopify-ingestion.md](docs/shopify-ingestion.md), [docs/stack-alignment.md](docs/stack-alignment.md), [docs/manual-setup-checklist.md](docs/manual-setup-checklist.md), [docs/bigquery-warehouse-plan.md](docs/bigquery-warehouse-plan.md), [docs/growth-channels-plan.md](docs/growth-channels-plan.md), [docs/supplier-integration-plan.md](docs/supplier-integration-plan.md), [docs/ai-runtime-plan.md](docs/ai-runtime-plan.md), [docs/worker-persistence-plan.md](docs/worker-persistence-plan.md), and [docs/demo-walkthrough.md](docs/demo-walkthrough.md) for the planning and demo layer behind this repo.

@@ -1,8 +1,10 @@
 import {
+  type CatalogEnrichmentPreview,
   getAlerts,
   getCatalogEnrichmentRuns,
   getDashboardSummary,
   getIntegrationReadiness,
+  type PricingRecommendationPreview,
   getPricingRecommendations,
   getShopifyStatus,
   getSkuOverview,
@@ -16,6 +18,12 @@ export type ModuleRuntimeMetric = {
   label: string;
   value: string;
   detail: string;
+};
+
+export type ModuleRuntimeFilters = {
+  q?: string;
+  status?: string;
+  sort?: string;
 };
 
 export type ModuleRuntimeItem = {
@@ -33,6 +41,7 @@ export type ModuleRuntimeItem = {
 
 export type ModuleRuntimeSection = {
   eyebrow: string;
+  layout?: "cards" | "table";
   title: string;
   emptyState: string;
   items: ModuleRuntimeItem[];
@@ -87,8 +96,24 @@ function humanizeStatus(value: string) {
   return value.replaceAll("_", " ");
 }
 
+function humanizeValue(value: string | null | undefined) {
+  if (!value) {
+    return "unknown";
+  }
+
+  return value.replaceAll("_", " ").replaceAll("-", " ");
+}
+
 function buildSkuHref(externalVariantId: string) {
   return `/sku/${encodeURIComponent(externalVariantId)}`;
+}
+
+function buildActivityHref(item: { targetKind: "sku" | "catalog_run"; targetId: string }) {
+  if (item.targetKind === "catalog_run") {
+    return `/catalog/runs/${encodeURIComponent(item.targetId)}`;
+  }
+
+  return buildSkuHref(item.targetId);
 }
 
 function mergeModes(modes: ApiMode[]): ApiMode {
@@ -136,6 +161,28 @@ function syncTone(status: string): ModuleRuntimeItem["statusTone"] {
   return "pending";
 }
 
+function activityTone(scope: "pricing" | "catalog", eventType: string): ModuleRuntimeItem["statusTone"] {
+  if (scope === "pricing") {
+    if (eventType === "approved") {
+      return "success";
+    }
+
+    if (eventType === "rejected") {
+      return "medium";
+    }
+  }
+
+  if (eventType === "cancelled") {
+    return "high";
+  }
+
+  if (eventType === "review_workspace_saved") {
+    return "medium";
+  }
+
+  return scope === "catalog" ? "pending" : "medium";
+}
+
 function inventoryTone(item: SkuOverviewItem): ModuleRuntimeItem["statusTone"] {
   if (item.availableInventory <= 2 && item.unitsSold > 0) {
     return "critical";
@@ -176,7 +223,162 @@ function buildBaseRuntime(): ModuleRuntime {
   };
 }
 
-export async function getModuleRuntime(slug: string): Promise<ModuleRuntime> {
+function normalizeQuery(value: string | undefined) {
+  const normalized = value?.trim();
+
+  return normalized ? normalized : undefined;
+}
+
+function normalizeStatusFilter(slug: string, value: string | undefined) {
+  const normalized = value?.trim();
+
+  if (!normalized) {
+    return undefined;
+  }
+
+  if (slug === "pricing-engine") {
+    return ["pending", "approved", "rejected"].includes(normalized) ? normalized : undefined;
+  }
+
+  if (slug === "catalog-ai") {
+    return ["pending_provider_config", "queued", "cancelled", "completed"].includes(normalized)
+      ? normalized
+      : undefined;
+  }
+
+  return undefined;
+}
+
+function normalizeSortFilter(slug: string, value: string | undefined) {
+  const normalized = value?.trim();
+
+  if (!normalized) {
+    return undefined;
+  }
+
+  if (slug === "pricing-engine") {
+    return ["newest", "largest-change", "highest-confidence", "status"].includes(normalized)
+      ? normalized
+      : undefined;
+  }
+
+  if (slug === "catalog-ai") {
+    return ["newest", "oldest", "status", "product"].includes(normalized) ? normalized : undefined;
+  }
+
+  return undefined;
+}
+
+function includesQuery(values: Array<string | null | undefined>, query: string | undefined) {
+  if (!query) {
+    return true;
+  }
+
+  const normalizedQuery = query.toLowerCase();
+
+  return values.some((value) => value?.toLowerCase().includes(normalizedQuery));
+}
+
+function buildModuleReturnPath(slug: string, filters: ModuleRuntimeFilters) {
+  const params = new URLSearchParams();
+
+  if (filters.status) {
+    params.set("status", filters.status);
+  }
+
+  if (filters.q) {
+    params.set("q", filters.q);
+  }
+
+  if (filters.sort) {
+    params.set("sort", filters.sort);
+  }
+
+  const query = params.toString();
+  return query ? `/modules/${slug}?${query}` : `/modules/${slug}`;
+}
+
+function compareText(left: string | null | undefined, right: string | null | undefined) {
+  return (left ?? "").localeCompare(right ?? "", undefined, {
+    sensitivity: "base"
+  });
+}
+
+function compareDateDesc(left: string | null | undefined, right: string | null | undefined) {
+  return (Date.parse(right ?? "") || 0) - (Date.parse(left ?? "") || 0);
+}
+
+function compareDateAsc(left: string | null | undefined, right: string | null | undefined) {
+  return (Date.parse(left ?? "") || 0) - (Date.parse(right ?? "") || 0);
+}
+
+function sortPricingItems(items: PricingRecommendationPreview[], sort: string | undefined) {
+  const sorted = [...items];
+
+  switch (sort) {
+    case "largest-change":
+      sorted.sort(
+        (left, right) =>
+          Math.abs(right.changePercent ?? 0) - Math.abs(left.changePercent ?? 0) ||
+          compareDateDesc(left.createdAt, right.createdAt)
+      );
+      break;
+    case "highest-confidence":
+      sorted.sort(
+        (left, right) =>
+          (right.confidenceScore ?? -1) - (left.confidenceScore ?? -1) ||
+          compareDateDesc(left.createdAt, right.createdAt)
+      );
+      break;
+    case "status":
+      sorted.sort(
+        (left, right) =>
+          compareText(left.status, right.status) || compareDateDesc(left.createdAt, right.createdAt)
+      );
+      break;
+    default:
+      sorted.sort((left, right) => compareDateDesc(left.createdAt, right.createdAt));
+      break;
+  }
+
+  return sorted;
+}
+
+function sortCatalogItems(items: CatalogEnrichmentPreview[], sort: string | undefined) {
+  const sorted = [...items];
+
+  switch (sort) {
+    case "oldest":
+      sorted.sort((left, right) => compareDateAsc(left.createdAt, right.createdAt));
+      break;
+    case "status":
+      sorted.sort(
+        (left, right) =>
+          compareText(left.status, right.status) || compareDateDesc(left.createdAt, right.createdAt)
+      );
+      break;
+    case "product":
+      sorted.sort(
+        (left, right) =>
+          compareText(left.externalProductId, right.externalProductId) ||
+          compareDateDesc(left.createdAt, right.createdAt)
+      );
+      break;
+    default:
+      sorted.sort((left, right) => compareDateDesc(left.createdAt, right.createdAt));
+      break;
+  }
+
+  return sorted;
+}
+
+export async function getModuleRuntime(slug: string, rawFilters: ModuleRuntimeFilters = {}): Promise<ModuleRuntime> {
+  const filters = {
+    q: normalizeQuery(rawFilters.q),
+    status: normalizeStatusFilter(slug, rawFilters.status),
+    sort: normalizeSortFilter(slug, rawFilters.sort)
+  };
+
   switch (slug) {
     case "sku-intelligence": {
       const [summary, skuOverview] = await Promise.all([getDashboardSummary(), getSkuOverview(12)]);
@@ -305,7 +507,17 @@ export async function getModuleRuntime(slug: string): Promise<ModuleRuntime> {
     }
 
     case "pricing-engine": {
-      const [summary, pricing] = await Promise.all([getDashboardSummary(), getPricingRecommendations(12)]);
+      const [summary, pricing] = await Promise.all([
+        getDashboardSummary(),
+        getPricingRecommendations(24, filters.status)
+      ]);
+      const filteredItems = sortPricingItems(
+        pricing.items.filter((item) =>
+          includesQuery([item.sku, item.externalVariantId, item.status], filters.q)
+        ),
+        filters.sort
+      );
+      const returnPath = buildModuleReturnPath(slug, filters);
 
       return {
         mode: mergeModes([summary.mode, pricing.mode]),
@@ -317,9 +529,12 @@ export async function getModuleRuntime(slug: string): Promise<ModuleRuntime> {
             detail: "Recommendations waiting for approval or follow-up"
           },
           {
-            label: "Tracked variants",
-            value: formatCount(summary.metrics.trackedVariants),
-            detail: "Variants already available for future pricing rules"
+            label: "Visible recommendations",
+            value: formatCount(filteredItems.length),
+            detail:
+              filters.status || filters.q
+                ? "Recommendations remaining after the active queue filters"
+                : "Recommendation rows currently loaded into the review queue"
           },
           {
             label: "Sync success 24h",
@@ -330,15 +545,19 @@ export async function getModuleRuntime(slug: string): Promise<ModuleRuntime> {
         sections: [
           {
             eyebrow: "Queue",
+            layout: "table",
             title: "Recommendation batch",
-            emptyState: "No pricing recommendations are queued yet.",
-            items: pricing.items.map((item) => ({
+            emptyState:
+              filters.status || filters.q
+                ? "No pricing recommendations match the current filters."
+                : "No pricing recommendations are queued yet.",
+            items: filteredItems.map((item) => ({
               title: item.sku ?? item.externalVariantId,
               detail: `${formatCurrency(item.currentPrice)} to ${formatCurrency(item.recommendedPrice)}`,
               meta: `Confidence ${formatPercent(item.confidenceScore)} · Change ${formatPercent(item.changePercent)} · Created ${formatDate(item.createdAt)}`,
               href: buildSkuHref(item.externalVariantId),
               reviewableRecommendationId: item.status === "pending" ? item.id : undefined,
-              reviewReturnPath: "/modules/pricing-engine",
+              reviewReturnPath: returnPath,
               statusLabel: humanizeStatus(item.status),
               statusTone: syncTone(item.status)
             }))
@@ -348,8 +567,21 @@ export async function getModuleRuntime(slug: string): Promise<ModuleRuntime> {
     }
 
     case "catalog-ai": {
-      const [summary, runs] = await Promise.all([getDashboardSummary(), getCatalogEnrichmentRuns(12)]);
-      const providerBlocked = runs.items.filter((item) => item.status === "pending_provider_config");
+      const [summary, runs] = await Promise.all([
+        getDashboardSummary(),
+        getCatalogEnrichmentRuns(24, filters.status)
+      ]);
+      const filteredItems = sortCatalogItems(
+        runs.items.filter((item) =>
+          includesQuery(
+            [item.externalProductId, item.status, item.provider, item.promptVersion],
+            filters.q
+          )
+        ),
+        filters.sort
+      );
+      const providerBlocked = filteredItems.filter((item) => item.status === "pending_provider_config");
+      const returnPath = buildModuleReturnPath(slug, filters);
 
       return {
         mode: mergeModes([summary.mode, runs.mode]),
@@ -366,22 +598,30 @@ export async function getModuleRuntime(slug: string): Promise<ModuleRuntime> {
             detail: "Runs that will move as soon as an LLM key is configured"
           },
           {
-            label: "Tracked products",
-            value: formatCount(summary.metrics.trackedProducts),
-            detail: "Products that can eventually flow into enrichment"
+            label: "Visible runs",
+            value: formatCount(filteredItems.length),
+            detail:
+              filters.status || filters.q
+                ? "Runs remaining after the active enrichment filters"
+                : "Enrichment rows currently loaded into the module"
           }
         ],
         sections: [
           {
             eyebrow: "Queue",
+            layout: "table",
             title: "Recent enrichment runs",
-            emptyState: "No enrichment runs are available yet.",
-            items: runs.items.map((item) => ({
+            emptyState:
+              filters.status || filters.q
+                ? "No enrichment runs match the current filters."
+                : "No enrichment runs are available yet.",
+            items: filteredItems.map((item) => ({
               title: item.externalProductId,
               detail: `Provider ${item.provider ?? "not configured"} · Prompt ${item.promptVersion ?? "pending"}`,
               meta: `Created ${formatDate(item.createdAt)}${item.completedAt ? ` · Completed ${formatDate(item.completedAt)}` : ""}`,
+              href: `/catalog/runs/${encodeURIComponent(item.id)}`,
               catalogRunId: item.status !== "completed" && item.status !== "cancelled" ? item.id : undefined,
-              catalogReturnPath: "/modules/catalog-ai",
+              catalogReturnPath: returnPath,
               statusLabel: humanizeStatus(item.status),
               statusTone: item.status === "pending_provider_config" ? "pending" : syncTone(item.status)
             }))
@@ -466,6 +706,7 @@ export async function getModuleRuntime(slug: string): Promise<ModuleRuntime> {
 
     case "alerts": {
       const [summary, alerts] = await Promise.all([getDashboardSummary(), getAlerts(12)]);
+      const recentSyncFailures = summary.recentSyncRuns.filter((item) => item.status !== "success");
 
       return {
         mode: mergeModes([summary.mode, alerts.mode]),
@@ -477,14 +718,17 @@ export async function getModuleRuntime(slug: string): Promise<ModuleRuntime> {
             detail: "Current alert volume waiting for triage"
           },
           {
-            label: "Sync runs 24h",
-            value: formatCount(summary.syncHealth.totalRunsLast24h),
-            detail: "Recent ingestion activity that can generate exceptions"
+            label: "Operator decisions",
+            value: formatCount(summary.recentActivity.length),
+            detail: "Recent pricing and catalog decisions available for triage context"
           },
           {
-            label: "Success rate",
-            value: formatPercent(summary.syncHealth.successRateLast24h),
-            detail: "A healthy sync rate usually keeps alert volume low"
+            label: "Recent sync failures",
+            value: formatCount(recentSyncFailures.length),
+            detail:
+              recentSyncFailures.length > 0
+                ? "Connector runs that may need investigation before they turn into alerts"
+                : "No failed sync runs are visible in the current dashboard snapshot"
           }
         ],
         sections: [
@@ -505,6 +749,31 @@ export async function getModuleRuntime(slug: string): Promise<ModuleRuntime> {
                     : item.severity === "medium"
                       ? "medium"
                       : "success"
+            }))
+          },
+          {
+            eyebrow: "Activity",
+            title: "Recent operator decisions",
+            emptyState: "Operator actions will appear here after pricing reviews or catalog decisions land.",
+            items: summary.recentActivity.map((item) => ({
+              title: item.targetLabel,
+              detail: item.summary,
+              meta: `${item.operatorLabel ?? "System or unknown operator"} · ${humanizeValue(item.eventType)} · ${humanizeValue(item.source)} · ${formatDate(item.createdAt)}`,
+              href: buildActivityHref(item),
+              statusLabel: humanizeValue(item.scope),
+              statusTone: activityTone(item.scope, item.eventType)
+            }))
+          },
+          {
+            eyebrow: "Context",
+            title: "Recent sync context",
+            emptyState: "No sync context is available yet.",
+            items: summary.recentSyncRuns.map((item) => ({
+              title: `${item.connector} · ${item.resourceType}`,
+              detail: `${item.triggerType} trigger${item.externalReference ? ` · Ref ${item.externalReference}` : ""}`,
+              meta: `Started ${formatDate(item.startedAt)}${item.finishedAt ? ` · Finished ${formatDate(item.finishedAt)}` : ""}`,
+              statusLabel: humanizeStatus(item.status),
+              statusTone: syncTone(item.status)
             }))
           }
         ]

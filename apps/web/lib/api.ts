@@ -38,6 +38,65 @@ export type CatalogEnrichmentPreview = {
   completedAt: string | null;
 };
 
+export type CatalogRunReviewDraft = {
+  mode: "dry_run_template" | "payload";
+  proposedTitle: string;
+  proposedHighlights: string[];
+  normalizedAttributes: Array<{
+    label: string;
+    value: string;
+  }>;
+  fitmentSignals: string[];
+  rationale: string;
+};
+
+export type CatalogRunReviewState = {
+  checklist: {
+    title: boolean;
+    highlights: boolean;
+    attributes: boolean;
+    fitment: boolean;
+    payload: boolean;
+  };
+  notes: string;
+  operatorLabel: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type CatalogRunReviewEvent = {
+  id: string;
+  eventType: string;
+  summary: string;
+  payload: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type CatalogRunDetail = {
+  id: string;
+  externalProductId: string;
+  status: string;
+  provider: string | null;
+  promptVersion: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  errorMessage: string | null;
+  product: {
+    title: string;
+    handle: string | null;
+    vendor: string | null;
+    productType: string | null;
+    productStatus: string;
+    tags: string[];
+    sourcePayload: Record<string, unknown>;
+  };
+  inputPayload: Record<string, unknown>;
+  outputPayload: Record<string, unknown> | null;
+  reviewDraft: CatalogRunReviewDraft;
+  reviewState: CatalogRunReviewState;
+  reviewEvents: CatalogRunReviewEvent[];
+};
+
 export type AlertPreview = {
   id: string;
   type: string;
@@ -58,6 +117,19 @@ export type SyncRunPreview = {
   externalReference: string | null;
   startedAt: string;
   finishedAt: string | null;
+};
+
+export type ActivityFeedItem = {
+  id: string;
+  scope: "pricing" | "catalog";
+  eventType: string;
+  summary: string;
+  targetKind: "sku" | "catalog_run";
+  targetId: string;
+  targetLabel: string;
+  operatorLabel: string | null;
+  source: string | null;
+  createdAt: string;
 };
 
 export type SkuOverviewItem = {
@@ -118,6 +190,27 @@ export type SkuPricingHistoryItem = {
   reasons: string[];
   createdAt: string;
   reviewedAt: string | null;
+  reviewOperatorLabel: string | null;
+  reviewSource: string | null;
+  reviewState: {
+    checklist: {
+      margin: boolean;
+      inventory: boolean;
+      velocity: boolean;
+      rationale: boolean;
+    };
+    notes: string;
+    operatorLabel: string | null;
+    createdAt: string | null;
+    updatedAt: string | null;
+  };
+  reviewEvents: Array<{
+    id: string;
+    eventType: string;
+    summary: string;
+    payload: Record<string, unknown>;
+    createdAt: string;
+  }>;
 };
 
 export type SkuCatalogHistoryItem = {
@@ -182,6 +275,7 @@ export type DashboardSummary = {
   syncHealth: SyncHealthSnapshot;
   recentPricingRecommendations: PricingRecommendationPreview[];
   recentCatalogEnrichmentRuns: CatalogEnrichmentPreview[];
+  recentActivity: ActivityFeedItem[];
   recentAlerts: AlertPreview[];
   recentSyncRuns: SyncRunPreview[];
   integrationSummary: IntegrationSummary;
@@ -261,6 +355,7 @@ function getFallbackDashboardSummary(reason: string): DashboardSummary {
     },
     recentPricingRecommendations: [],
     recentCatalogEnrichmentRuns: [],
+    recentActivity: [],
     recentAlerts: [],
     recentSyncRuns: [],
     integrationSummary: {
@@ -403,6 +498,38 @@ export async function getSkuDetail(externalVariantId: string): Promise<ItemRespo
   } catch (error) {
     return getFallbackItem(
       error instanceof Error ? error.message : "SKU detail API is unavailable."
+    );
+  }
+}
+
+export async function getCatalogRunDetail(runId: string): Promise<ItemResponse<CatalogRunDetail>> {
+  try {
+    const response = await fetch(
+      `${getApiBaseUrl()}/catalog/enrichment-runs/${encodeURIComponent(runId)}`,
+      {
+        cache: "no-store"
+      }
+    );
+
+    if (response.status === 404) {
+      const payload = (await response.json()) as ItemResponse<CatalogRunDetail>;
+
+      return {
+        mode: payload.mode,
+        item: null,
+        reason: payload.reason ?? "Catalog enrichment run was not found.",
+        notFound: true
+      };
+    }
+
+    if (!response.ok) {
+      throw new Error(`Catalog run API returned ${response.status}`);
+    }
+
+    return (await response.json()) as ItemResponse<CatalogRunDetail>;
+  } catch (error) {
+    return getFallbackItem(
+      error instanceof Error ? error.message : "Catalog run API is unavailable."
     );
   }
 }

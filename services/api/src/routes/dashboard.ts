@@ -58,6 +58,7 @@ function buildEmptyDashboardResponse(mode: "preview" | "degraded", reason?: stri
     },
     recentPricingRecommendations: [],
     recentCatalogEnrichmentRuns: [],
+    recentActivity: [],
     recentAlerts: [],
     recentSyncRuns: [],
     integrationSummary: buildIntegrationSummary(),

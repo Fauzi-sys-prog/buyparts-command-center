@@ -1,4 +1,5 @@
-import { query } from "../client.js";
+import { withTransaction } from "../client.js";
+import { insertCatalogReviewEvent } from "./catalog-review-workspace-repository.js";
 
 export type CatalogRunDecision = "queued" | "cancelled";
 
@@ -32,83 +33,107 @@ export type CatalogRunReviewResult =
       };
     };
 
-async function getCatalogRunState(id: string) {
-  const result = await query<CatalogRunStateRow>(
-    `
-      SELECT
-        id,
-        status,
-        completed_at::text,
-        error_message
-      FROM catalog_enrichment_runs
-      WHERE id = $1
-      LIMIT 1
-    `,
-    [id]
-  );
-
-  return result?.rows[0] ?? null;
-}
-
 export async function reviewCatalogRun(
   id: string,
-  decision: CatalogRunDecision
-): Promise<CatalogRunReviewResult> {
-  const existing = await getCatalogRunState(id);
-
-  if (!existing) {
-    return {
-      outcome: "not_found"
-    };
+  decision: CatalogRunDecision,
+  input?: {
+    operatorLabel?: string | null;
+    source?: string | null;
   }
+): Promise<CatalogRunReviewResult> {
+  const operatorLabel =
+    typeof input?.operatorLabel === "string" && input.operatorLabel.trim().length > 0
+      ? input.operatorLabel.trim()
+      : "Local operator";
+  const source =
+    typeof input?.source === "string" && input.source.trim().length > 0 ? input.source.trim() : "web";
 
-  if (existing.status === "completed" || existing.status === "cancelled") {
+  return withTransaction(async (client) => {
+    const existingResult = await client.query<CatalogRunStateRow>(
+      `
+        SELECT
+          id,
+          status,
+          completed_at::text,
+          error_message
+        FROM catalog_enrichment_runs
+        WHERE id = $1
+        LIMIT 1
+      `,
+      [id]
+    );
+
+    const existing = existingResult.rows[0];
+
+    if (!existing) {
+      return {
+        outcome: "not_found"
+      };
+    }
+
+    if (existing.status === "completed" || existing.status === "cancelled") {
+      return {
+        outcome: "already_finalized",
+        item: {
+          id: existing.id,
+          status: existing.status,
+          completedAt: existing.completed_at,
+          errorMessage: existing.error_message
+        }
+      };
+    }
+
+    const result = await client.query<CatalogRunStateRow>(
+      `
+        UPDATE catalog_enrichment_runs
+        SET
+          status = $2,
+          completed_at = CASE WHEN $2 = 'cancelled' THEN NOW() ELSE NULL END,
+          error_message = CASE
+            WHEN $2 = 'cancelled' THEN 'Cancelled by operator.'
+            ELSE NULL
+          END
+        WHERE id = $1
+        RETURNING
+          id,
+          status,
+          completed_at::text,
+          error_message
+      `,
+      [id, decision]
+    );
+
+    const updated = result.rows[0];
+
+    if (!updated) {
+      return {
+        outcome: "not_found"
+      };
+    }
+
+    await insertCatalogReviewEvent(
+      client,
+      id,
+      "status_updated",
+      decision === "queued"
+        ? `${operatorLabel} returned the catalog run to the active queue.`
+        : `${operatorLabel} cancelled this catalog run.`,
+      {
+        status: updated.status,
+        errorMessage: updated.error_message,
+        operatorLabel,
+        source
+      }
+    );
+
     return {
-      outcome: "already_finalized",
+      outcome: "updated",
       item: {
-        id: existing.id,
-        status: existing.status,
-        completedAt: existing.completed_at,
-        errorMessage: existing.error_message
+        id: updated.id,
+        status: updated.status,
+        completedAt: updated.completed_at,
+        errorMessage: updated.error_message
       }
     };
-  }
-
-  const result = await query<CatalogRunStateRow>(
-    `
-      UPDATE catalog_enrichment_runs
-      SET
-        status = $2,
-        completed_at = CASE WHEN $2 = 'cancelled' THEN NOW() ELSE NULL END,
-        error_message = CASE
-          WHEN $2 = 'cancelled' THEN 'Cancelled by operator.'
-          ELSE NULL
-        END
-      WHERE id = $1
-      RETURNING
-        id,
-        status,
-        completed_at::text,
-        error_message
-    `,
-    [id, decision]
-  );
-
-  const updated = result?.rows[0];
-
-  if (!updated) {
-    return {
-      outcome: "not_found"
-    };
-  }
-
-  return {
-    outcome: "updated",
-    item: {
-      id: updated.id,
-      status: updated.status,
-      completedAt: updated.completed_at,
-      errorMessage: updated.error_message
-    }
-  };
+  });
 }

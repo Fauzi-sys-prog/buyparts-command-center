@@ -1,3 +1,5 @@
+import { FormSubmitButton } from "@/components/form-submit-button";
+import { OperatorProfileHiddenInput } from "@/components/operator-profile-hidden-input";
 import {
   approvePricingRecommendationAction,
   rejectPricingRecommendationAction
@@ -26,14 +28,20 @@ export function PricingReviewActions({
   return (
     <div className="action-row">
       <form action={approveAction} className="action-form">
-        <button type="submit" className="action-button action-approve">
-          Approve
-        </button>
+        <OperatorProfileHiddenInput />
+        <FormSubmitButton
+          className="action-button action-approve"
+          idleLabel="Approve"
+          pendingLabel="Approving..."
+        />
       </form>
       <form action={rejectAction} className="action-form">
-        <button type="submit" className="action-button action-reject">
-          Reject
-        </button>
+        <OperatorProfileHiddenInput />
+        <FormSubmitButton
+          className="action-button action-reject"
+          idleLabel="Reject"
+          pendingLabel="Rejecting..."
+        />
       </form>
     </div>
   );

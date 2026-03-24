@@ -152,11 +152,44 @@ CREATE TABLE IF NOT EXISTS pricing_recommendations (
   status TEXT NOT NULL DEFAULT 'pending',
   reasons JSONB NOT NULL DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  reviewed_at TIMESTAMPTZ
+  reviewed_at TIMESTAMPTZ,
+  review_operator_label TEXT,
+  review_source TEXT
 );
 
 CREATE INDEX IF NOT EXISTS pricing_recommendations_status_idx
   ON pricing_recommendations(status, created_at DESC);
+
+ALTER TABLE pricing_recommendations
+  ADD COLUMN IF NOT EXISTS review_operator_label TEXT;
+
+ALTER TABLE pricing_recommendations
+  ADD COLUMN IF NOT EXISTS review_source TEXT;
+
+CREATE TABLE IF NOT EXISTS pricing_review_workspaces (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  pricing_recommendation_id UUID NOT NULL UNIQUE REFERENCES pricing_recommendations(id) ON DELETE CASCADE,
+  checklist JSONB NOT NULL DEFAULT '{}'::jsonb,
+  notes TEXT NOT NULL DEFAULT '',
+  operator_label TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS pricing_review_workspaces_recommendation_idx
+  ON pricing_review_workspaces(pricing_recommendation_id);
+
+CREATE TABLE IF NOT EXISTS pricing_review_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  pricing_recommendation_id UUID NOT NULL REFERENCES pricing_recommendations(id) ON DELETE CASCADE,
+  event_type TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS pricing_review_events_recommendation_created_idx
+  ON pricing_review_events(pricing_recommendation_id, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS catalog_enrichment_runs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -170,6 +203,31 @@ CREATE TABLE IF NOT EXISTS catalog_enrichment_runs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   completed_at TIMESTAMPTZ
 );
+
+CREATE TABLE IF NOT EXISTS catalog_review_workspaces (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  catalog_run_id UUID NOT NULL UNIQUE REFERENCES catalog_enrichment_runs(id) ON DELETE CASCADE,
+  checklist JSONB NOT NULL DEFAULT '{}'::jsonb,
+  notes TEXT NOT NULL DEFAULT '',
+  operator_label TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS catalog_review_workspaces_run_idx
+  ON catalog_review_workspaces(catalog_run_id);
+
+CREATE TABLE IF NOT EXISTS catalog_review_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  catalog_run_id UUID NOT NULL REFERENCES catalog_enrichment_runs(id) ON DELETE CASCADE,
+  event_type TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS catalog_review_events_run_created_idx
+  ON catalog_review_events(catalog_run_id, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS shopify_webhook_receipts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
