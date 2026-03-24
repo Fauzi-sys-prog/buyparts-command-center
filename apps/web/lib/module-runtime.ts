@@ -25,6 +25,8 @@ export type ModuleRuntimeItem = {
   href?: string;
   reviewableRecommendationId?: string;
   reviewReturnPath?: string;
+  catalogRunId?: string;
+  catalogReturnPath?: string;
   statusLabel?: string;
   statusTone?: "pending" | "success" | "high" | "medium" | "critical";
 };
@@ -378,6 +380,8 @@ export async function getModuleRuntime(slug: string): Promise<ModuleRuntime> {
               title: item.externalProductId,
               detail: `Provider ${item.provider ?? "not configured"} · Prompt ${item.promptVersion ?? "pending"}`,
               meta: `Created ${formatDate(item.createdAt)}${item.completedAt ? ` · Completed ${formatDate(item.completedAt)}` : ""}`,
+              catalogRunId: item.status !== "completed" && item.status !== "cancelled" ? item.id : undefined,
+              catalogReturnPath: "/modules/catalog-ai",
               statusLabel: humanizeStatus(item.status),
               statusTone: item.status === "pending_provider_config" ? "pending" : syncTone(item.status)
             }))

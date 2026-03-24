@@ -1,3 +1,4 @@
+import { CatalogRunActions } from "@/components/catalog-run-actions";
 import Link from "next/link";
 
 import { PricingReviewActions } from "@/components/pricing-review-actions";
@@ -380,6 +381,9 @@ export function SkuDetailView({ externalVariantId, response }: SkuDetailViewProp
                   <small className="list-meta">
                     {item.errorMessage ?? `Completed ${formatDate(item.completedAt)}`}
                   </small>
+                  {item.status !== "completed" && item.status !== "cancelled" ? (
+                    <CatalogRunActions runId={item.id} returnPath={returnPath} />
+                  ) : null}
                 </div>
               ))
             ) : (

@@ -1,3 +1,4 @@
+import { CatalogRunActions } from "@/components/catalog-run-actions";
 import Link from "next/link";
 
 import { PricingReviewActions } from "@/components/pricing-review-actions";
@@ -203,6 +204,9 @@ export async function DashboardHome() {
                     Created {formatDate(item.createdAt)}
                     {item.completedAt ? ` · Completed ${formatDate(item.completedAt)}` : ""}
                   </small>
+                  {item.status !== "completed" && item.status !== "cancelled" ? (
+                    <CatalogRunActions runId={item.id} returnPath="/" />
+                  ) : null}
                 </div>
               ))
             ) : (

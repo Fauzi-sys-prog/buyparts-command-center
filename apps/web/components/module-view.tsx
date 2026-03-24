@@ -1,3 +1,4 @@
+import { CatalogRunActions } from "@/components/catalog-run-actions";
 import Link from "next/link";
 
 import { PricingReviewActions } from "@/components/pricing-review-actions";
@@ -143,6 +144,9 @@ export function ModuleView({ module, runtime }: ModuleViewProps) {
                       recommendationId={item.reviewableRecommendationId}
                       returnPath={item.reviewReturnPath}
                     />
+                  ) : null}
+                  {item.catalogRunId && item.catalogReturnPath ? (
+                    <CatalogRunActions runId={item.catalogRunId} returnPath={item.catalogReturnPath} />
                   ) : null}
                 </div>
               ))

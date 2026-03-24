@@ -344,7 +344,7 @@ export async function getDashboardReadModel(): Promise<DashboardReadModel> {
           (
             SELECT COUNT(*)
             FROM catalog_enrichment_runs
-            WHERE status NOT IN ('completed', 'failed')
+            WHERE status NOT IN ('completed', 'failed', 'cancelled')
           ) AS pending_catalog_enrichment_runs,
           (
             SELECT COUNT(*)
