@@ -6,6 +6,7 @@ coverage
 .env.local
 .venv
 *.tsbuildinfo
+*.egg-info/
 __pycache__
 *.pyc
 *.log
