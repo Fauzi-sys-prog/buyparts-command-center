@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PricingReviewActions } from "@/components/pricing-review-actions";
 import { getDashboardSummary } from "@/lib/api";
 import { moduleContent } from "@/lib/module-content";
 import { pipelineStages } from "@/lib/navigation";
@@ -161,6 +162,9 @@ export async function DashboardHome() {
                     Change {formatPercent(item.changePercent)} · Confidence{" "}
                     {formatPercent(item.confidenceScore)}
                   </small>
+                  {item.status === "pending" ? (
+                    <PricingReviewActions recommendationId={item.id} returnPath="/" />
+                  ) : null}
                 </div>
               ))
             ) : (

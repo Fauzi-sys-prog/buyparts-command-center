@@ -375,6 +375,46 @@ a {
   margin-top: 1rem;
 }
 
+.action-row {
+  display: flex;
+  gap: 0.65rem;
+  margin-top: 0.9rem;
+}
+
+.action-form {
+  margin: 0;
+}
+
+.action-button {
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.action-button:hover {
+  transform: translateY(-1px);
+}
+
+.action-approve {
+  border-color: rgba(74, 222, 128, 0.28);
+  background: rgba(74, 222, 128, 0.12);
+  color: #b8f3cc;
+}
+
+.action-reject {
+  border-color: rgba(248, 113, 113, 0.26);
+  background: rgba(248, 113, 113, 0.1);
+  color: #fecaca;
+}
+
 .split-grid {
   display: grid;
   gap: 1rem;

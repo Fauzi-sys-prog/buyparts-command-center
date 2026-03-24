@@ -23,6 +23,8 @@ export type ModuleRuntimeItem = {
   detail: string;
   meta?: string;
   href?: string;
+  reviewableRecommendationId?: string;
+  reviewReturnPath?: string;
   statusLabel?: string;
   statusTone?: "pending" | "success" | "high" | "medium" | "critical";
 };
@@ -333,6 +335,8 @@ export async function getModuleRuntime(slug: string): Promise<ModuleRuntime> {
               detail: `${formatCurrency(item.currentPrice)} to ${formatCurrency(item.recommendedPrice)}`,
               meta: `Confidence ${formatPercent(item.confidenceScore)} · Change ${formatPercent(item.changePercent)} · Created ${formatDate(item.createdAt)}`,
               href: buildSkuHref(item.externalVariantId),
+              reviewableRecommendationId: item.status === "pending" ? item.id : undefined,
+              reviewReturnPath: "/modules/pricing-engine",
               statusLabel: humanizeStatus(item.status),
               statusTone: syncTone(item.status)
             }))

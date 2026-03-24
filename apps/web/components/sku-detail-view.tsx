@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PricingReviewActions } from "@/components/pricing-review-actions";
 import type { ItemResponse, SkuDetail } from "@/lib/api";
 
 type SkuDetailViewProps = {
@@ -101,6 +102,7 @@ export function SkuDetailView({ externalVariantId, response }: SkuDetailViewProp
   }
 
   const { summary, orderHistory, inventoryHistory, pricingHistory, catalogHistory } = response.item;
+  const returnPath = `/sku/${encodeURIComponent(summary.externalVariantId)}`;
 
   return (
     <div className="page-grid">
@@ -343,6 +345,9 @@ export function SkuDetailView({ externalVariantId, response }: SkuDetailViewProp
                   <small className="list-meta">
                     {item.reasons.length > 0 ? item.reasons.join(" ") : "No pricing rationale saved yet."}
                   </small>
+                  {item.status === "pending" ? (
+                    <PricingReviewActions recommendationId={item.id} returnPath={returnPath} />
+                  ) : null}
                 </div>
               ))
             ) : (

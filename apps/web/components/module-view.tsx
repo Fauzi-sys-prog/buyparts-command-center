@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PricingReviewActions } from "@/components/pricing-review-actions";
 import type { ModuleContent } from "@/lib/module-content";
 import type { ModuleRuntime } from "@/lib/module-runtime";
 
@@ -137,6 +138,12 @@ export function ModuleView({ module, runtime }: ModuleViewProps) {
                   </div>
                   <p>{item.detail}</p>
                   {item.meta ? <small className="list-meta">{item.meta}</small> : null}
+                  {item.reviewableRecommendationId && item.reviewReturnPath ? (
+                    <PricingReviewActions
+                      recommendationId={item.reviewableRecommendationId}
+                      returnPath={item.reviewReturnPath}
+                    />
+                  ) : null}
                 </div>
               ))
             ) : (

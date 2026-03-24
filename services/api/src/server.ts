@@ -4,6 +4,7 @@ import { dashboardRoute } from "./routes/dashboard.js";
 import { integrationsRoute } from "./routes/integrations.js";
 import { healthRoute } from "./routes/health.js";
 import { modulesRoute } from "./routes/modules.js";
+import { pricingRoute } from "./routes/pricing.js";
 import { shopifyRoute } from "./routes/shopify.js";
 
 export function buildServer() {
@@ -22,6 +23,8 @@ export function buildServer() {
         "/sku/overview",
         "/sku/variants/:externalVariantId",
         "/pricing/recommendations",
+        "/pricing/recommendations/:id/approve",
+        "/pricing/recommendations/:id/reject",
         "/catalog/enrichment-runs",
         "/alerts",
         "/integrations/readiness",
@@ -35,6 +38,7 @@ export function buildServer() {
   app.register(modulesRoute);
   app.register(dashboardRoute);
   app.register(integrationsRoute);
+  app.register(pricingRoute);
   app.register(shopifyRoute);
 
   return app;
