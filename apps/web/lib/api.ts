@@ -1,3 +1,5 @@
+export type ApiMode = "live" | "preview" | "degraded";
+
 type DashboardMetricSnapshot = {
   trackedProducts: number;
   trackedVariants: number;
@@ -14,7 +16,7 @@ type SyncHealthSnapshot = {
   lastSyncAt: string | null;
 };
 
-type PricingRecommendationPreview = {
+export type PricingRecommendationPreview = {
   id: string;
   externalVariantId: string;
   sku: string | null;
@@ -26,7 +28,7 @@ type PricingRecommendationPreview = {
   changePercent: number | null;
 };
 
-type CatalogEnrichmentPreview = {
+export type CatalogEnrichmentPreview = {
   id: string;
   externalProductId: string;
   status: string;
@@ -36,7 +38,7 @@ type CatalogEnrichmentPreview = {
   completedAt: string | null;
 };
 
-type AlertPreview = {
+export type AlertPreview = {
   id: string;
   type: string;
   severity: string;
@@ -47,7 +49,7 @@ type AlertPreview = {
   createdAt: string;
 };
 
-type SyncRunPreview = {
+export type SyncRunPreview = {
   id: string;
   connector: string;
   resourceType: string;
@@ -58,7 +60,27 @@ type SyncRunPreview = {
   finishedAt: string | null;
 };
 
-type IntegrationSummary = {
+export type SkuOverviewItem = {
+  externalVariantId: string;
+  externalProductId: string;
+  sku: string | null;
+  productTitle: string;
+  variantTitle: string;
+  vendor: string | null;
+  productType: string | null;
+  currentPrice: number | null;
+  availableInventory: number;
+  unitsSold: number;
+  unitsSold30d: number;
+  ordersCount: number;
+  lastOrderedAt: string | null;
+  pricingStatus: string | null;
+  recommendedPrice: number | null;
+  catalogStatus: string | null;
+  catalogProvider: string | null;
+};
+
+export type IntegrationSummary = {
   total: number;
   configured: number;
   partiallyConfigured: number;
@@ -66,8 +88,37 @@ type IntegrationSummary = {
   codeReady: number;
 };
 
+export type IntegrationReadinessItem = {
+  id: string;
+  name: string;
+  category: string;
+  status: "configured" | "partially_configured" | "needs_manual_setup" | "code_ready";
+  summary: string;
+  requiredEnv: string[];
+  optionalEnv: string[];
+  missingEnv: string[];
+  configuredEnv: string[];
+  manualSteps: string[];
+};
+
+export type IntegrationReadinessResponse = {
+  items: IntegrationReadinessItem[];
+  summary: IntegrationSummary;
+};
+
+export type ShopifyStatusResponse = {
+  connector: string;
+  status: {
+    storeDomainConfigured: boolean;
+    adminTokenConfigured: boolean;
+    warehouseConfigured: boolean;
+    projectPhase: string;
+  };
+  endpoints: string[];
+};
+
 export type DashboardSummary = {
-  mode: "live" | "preview" | "degraded";
+  mode: ApiMode;
   generatedAt: string;
   metrics: DashboardMetricSnapshot;
   syncHealth: SyncHealthSnapshot;
@@ -79,6 +130,13 @@ export type DashboardSummary = {
   reason?: string;
 };
 
+export type ListResponse<T> = {
+  mode: ApiMode;
+  total: number;
+  items: T[];
+  reason?: string;
+};
+
 function getApiBaseUrl() {
   const baseUrl =
     process.env.API_BASE_URL ??
@@ -86,6 +144,36 @@ function getApiBaseUrl() {
     "http://127.0.0.1:4000";
 
   return baseUrl.replace(/\/$/, "");
+}
+
+function buildUrl(path: string, params?: Record<string, string | number | undefined>) {
+  const url = new URL(`${getApiBaseUrl()}${path}`);
+
+  for (const [key, value] of Object.entries(params ?? {})) {
+    if (value === undefined || value === "") {
+      continue;
+    }
+
+    url.searchParams.set(key, String(value));
+  }
+
+  return url.toString();
+}
+
+async function fetchApi<T>(path: string, fallback: T, params?: Record<string, string | number | undefined>) {
+  try {
+    const response = await fetch(buildUrl(path, params), {
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error(`Dashboard API returned ${response.status}`);
+    }
+
+    return (await response.json()) as T;
+  } catch {
+    return fallback;
+  }
 }
 
 function getFallbackDashboardSummary(reason: string): DashboardSummary {
@@ -121,20 +209,95 @@ function getFallbackDashboardSummary(reason: string): DashboardSummary {
   };
 }
 
-export async function getDashboardSummary(): Promise<DashboardSummary> {
-  try {
-    const response = await fetch(`${getApiBaseUrl()}/dashboard/summary`, {
-      cache: "no-store"
-    });
+function getFallbackList<T>(reason: string): ListResponse<T> {
+  return {
+    mode: "preview",
+    total: 0,
+    items: [],
+    reason
+  };
+}
 
-    if (!response.ok) {
-      throw new Error(`Dashboard API returned ${response.status}`);
+function getFallbackReadiness(): IntegrationReadinessResponse {
+  return {
+    items: [],
+    summary: {
+      total: 0,
+      configured: 0,
+      partiallyConfigured: 0,
+      needsManualSetup: 0,
+      codeReady: 0
     }
+  };
+}
 
-    return (await response.json()) as DashboardSummary;
-  } catch (error) {
-    return getFallbackDashboardSummary(
-      error instanceof Error ? error.message : "Dashboard API is unavailable."
-    );
-  }
+function getFallbackShopifyStatus(): ShopifyStatusResponse {
+  return {
+    connector: "shopify",
+    status: {
+      storeDomainConfigured: false,
+      adminTokenConfigured: false,
+      warehouseConfigured: false,
+      projectPhase: "shopify-first"
+    },
+    endpoints: []
+  };
+}
+
+export async function getDashboardSummary(): Promise<DashboardSummary> {
+  return fetchApi(
+    "/dashboard/summary",
+    getFallbackDashboardSummary("Dashboard API is unavailable.")
+  );
+}
+
+export async function getPricingRecommendations(limit = 12, status?: string) {
+  return fetchApi<ListResponse<PricingRecommendationPreview>>(
+    "/pricing/recommendations",
+    getFallbackList("Pricing API is unavailable."),
+    { limit, status }
+  );
+}
+
+export async function getCatalogEnrichmentRuns(limit = 12, status?: string) {
+  return fetchApi<ListResponse<CatalogEnrichmentPreview>>(
+    "/catalog/enrichment-runs",
+    getFallbackList("Catalog API is unavailable."),
+    { limit, status }
+  );
+}
+
+export async function getAlerts(limit = 12, status?: string) {
+  return fetchApi<ListResponse<AlertPreview>>("/alerts", getFallbackList("Alerts API is unavailable."), {
+    limit,
+    status
+  });
+}
+
+export async function getSkuOverview(limit = 12) {
+  return fetchApi<ListResponse<SkuOverviewItem>>("/sku/overview", getFallbackList("SKU API is unavailable."), {
+    limit
+  });
+}
+
+export async function getSyncRuns(limit = 12, status?: string, connector?: string) {
+  return fetchApi<ListResponse<SyncRunPreview>>(
+    "/integrations/sync-runs",
+    getFallbackList("Sync runs API is unavailable."),
+    { limit, status, connector }
+  );
+}
+
+export async function getIntegrationReadiness() {
+  return fetchApi<IntegrationReadinessResponse>(
+    "/integrations/readiness",
+    getFallbackReadiness()
+  );
+}
+
+export async function getShopifyStatus() {
+  return fetchApi<ShopifyStatusResponse>(
+    "/integrations/shopify/status",
+    getFallbackShopifyStatus()
+  );
 }

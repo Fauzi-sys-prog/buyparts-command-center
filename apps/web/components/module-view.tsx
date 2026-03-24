@@ -1,18 +1,50 @@
 import type { ModuleContent } from "@/lib/module-content";
+import type { ModuleRuntime } from "@/lib/module-runtime";
 
 type ModuleViewProps = {
   module: ModuleContent;
+  runtime: ModuleRuntime;
 };
 
-export function ModuleView({ module }: ModuleViewProps) {
+function getModeLabel(mode: ModuleRuntime["mode"]) {
+  if (mode === "live") {
+    return "Live module state";
+  }
+
+  if (mode === "degraded") {
+    return "Partial module state";
+  }
+
+  return "Preview module state";
+}
+
+function getToneClass(tone: NonNullable<ModuleRuntime["sections"][number]["items"][number]["statusTone"]>) {
+  return `status-${tone}`;
+}
+
+export function ModuleView({ module, runtime }: ModuleViewProps) {
   return (
     <div className="page-grid">
       <section className="hero-card">
-        <div>
-          <p className="eyebrow">{module.maturity}</p>
-          <h3>{module.title}</h3>
-          <p className="hero-copy">{module.summary}</p>
+        <div className="hero-header">
+          <div>
+            <p className="eyebrow">{module.maturity}</p>
+            <h3>{module.title}</h3>
+            <p className="hero-copy">{module.summary}</p>
+          </div>
+
+          <div className={`status-indicator is-${runtime.mode}`}>
+            <span>{getModeLabel(runtime.mode)}</span>
+            <strong>{runtime.metrics.length} live metrics available</strong>
+          </div>
         </div>
+
+        {runtime.reason ? (
+          <div className="banner-card">
+            <strong>Module note</strong>
+            <p>{runtime.reason}</p>
+          </div>
+        ) : null}
 
         <div className="module-summary">
           <article className="metric-card">
@@ -25,6 +57,14 @@ export function ModuleView({ module }: ModuleViewProps) {
             <strong>{module.dataSources.length}</strong>
             <p>Initial upstream sources needed for this module.</p>
           </article>
+
+          {runtime.metrics.map((metric) => (
+            <article key={metric.label} className="metric-card">
+              <span>{metric.label}</span>
+              <strong>{metric.value}</strong>
+              <p>{metric.detail}</p>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -61,6 +101,42 @@ export function ModuleView({ module }: ModuleViewProps) {
           </div>
         </article>
       </section>
+
+      {runtime.sections.map((section) => (
+        <section key={`${section.eyebrow}-${section.title}`} className="section-card">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">{section.eyebrow}</p>
+              <h3>{section.title}</h3>
+            </div>
+          </div>
+
+          <div className="list-stack">
+            {section.items.length > 0 ? (
+              section.items.map((item) => (
+                <div key={`${section.title}-${item.title}-${item.meta ?? ""}`} className="list-card">
+                  <div className="list-card-header">
+                    <strong>{item.title}</strong>
+                    {item.statusLabel ? (
+                      <span
+                        className={`status-pill${
+                          item.statusTone ? ` ${getToneClass(item.statusTone)}` : ""
+                        }`}
+                      >
+                        {item.statusLabel}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p>{item.detail}</p>
+                  {item.meta ? <small className="list-meta">{item.meta}</small> : null}
+                </div>
+              ))
+            ) : (
+              <div className="list-card">{section.emptyState}</div>
+            )}
+          </div>
+        </section>
+      ))}
 
       <section className="section-card">
         <div className="section-heading">

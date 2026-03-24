@@ -5,7 +5,8 @@ import {
   getDashboardReadModel,
   listAlerts,
   listCatalogEnrichmentRuns,
-  listPricingRecommendations
+  listPricingRecommendations,
+  listSkuOverview
 } from "../db/repositories/read-model-repository.js";
 import { getIntegrationReadinessCatalog } from "../domain/integration-readiness.js";
 
@@ -178,6 +179,37 @@ export const dashboardRoute: FastifyPluginAsync = async (app) => {
         total: 0,
         items: [],
         reason: error instanceof Error ? error.message : "Unable to read alerts."
+      });
+    }
+  });
+
+  app.get<{ Querystring: ListQuery }>("/sku/overview", async (request, reply) => {
+    const limit = clampLimit(request.query.limit, 12);
+
+    if (!isPostgresConfigured()) {
+      return {
+        mode: "preview",
+        total: 0,
+        items: []
+      };
+    }
+
+    try {
+      const items = await listSkuOverview(limit);
+
+      return {
+        mode: "live",
+        total: items.length,
+        items
+      };
+    } catch (error) {
+      app.log.error(error);
+
+      return reply.code(200).send({
+        mode: "degraded",
+        total: 0,
+        items: [],
+        reason: error instanceof Error ? error.message : "Unable to read SKU overview."
       });
     }
   });

@@ -2,6 +2,9 @@ import { notFound } from "next/navigation";
 
 import { ModuleView } from "@/components/module-view";
 import { moduleContent } from "@/lib/module-content";
+import { getModuleRuntime } from "@/lib/module-runtime";
+
+export const dynamic = "force-dynamic";
 
 type ModulePageProps = {
   params: Promise<{
@@ -17,5 +20,7 @@ export default async function ModulePage({ params }: ModulePageProps) {
     notFound();
   }
 
-  return <ModuleView module={module} />;
+  const runtime = await getModuleRuntime(slug);
+
+  return <ModuleView module={module} runtime={runtime} />;
 }

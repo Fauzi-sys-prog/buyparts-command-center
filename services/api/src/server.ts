@@ -19,10 +19,12 @@ export function buildServer() {
         "/health",
         "/modules",
         "/dashboard/summary",
+        "/sku/overview",
         "/pricing/recommendations",
         "/catalog/enrichment-runs",
         "/alerts",
         "/integrations/readiness",
+        "/integrations/sync-runs",
         "/integrations/shopify/status"
       ]
     };
