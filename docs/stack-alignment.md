@@ -32,7 +32,7 @@ This project is being shaped to match the BuyParts.Online concept and stack dire
 ### Google BigQuery
 
 - downstream warehouse for large-scale SKU analytics and spend joins
-- first worker stub lives in `services/worker/src/buyparts_worker/jobs/bigquery_sync.py`
+- readiness, manifest, and dry-run sync planning now live under `services/worker/src/buyparts_worker`
 
 ### AI / LLM technologies
 
