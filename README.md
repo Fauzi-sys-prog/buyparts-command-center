@@ -49,6 +49,15 @@ This repository is intentionally aligned to the target stack from the BuyParts.O
 3. Install dependencies and start the API to test real Shopify webhook persistence.
 4. Move pricing and catalog enrichment logic into the worker with auditable job runs.
 
+## Manual setup checkpoints
+
+The API now exposes a readiness map for every external integration:
+
+- `GET /integrations/readiness`
+- `GET /integrations/readiness/:id`
+
+Use that readiness view to see exactly which env vars are still missing before we wire a live provider.
+
 ## GitHub workflow
 
 - `main`: release-ready branch
@@ -58,4 +67,4 @@ This repository is intentionally aligned to the target stack from the BuyParts.O
 
 See [docs/github-flow.md](docs/github-flow.md) for the branch and pull request flow.
 
-See [docs/architecture.md](docs/architecture.md), [docs/mvp-roadmap.md](docs/mvp-roadmap.md), [docs/shopify-ingestion.md](docs/shopify-ingestion.md), and [docs/stack-alignment.md](docs/stack-alignment.md) for the planning layer behind this scaffold.
+See [docs/architecture.md](docs/architecture.md), [docs/mvp-roadmap.md](docs/mvp-roadmap.md), [docs/shopify-ingestion.md](docs/shopify-ingestion.md), [docs/stack-alignment.md](docs/stack-alignment.md), and [docs/manual-setup-checklist.md](docs/manual-setup-checklist.md) for the planning layer behind this scaffold.

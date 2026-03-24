@@ -6,6 +6,7 @@ export type ModuleContent = {
   dataSources: string[];
   outputs: string[];
   firstBuilds: string[];
+  manualSetup?: string[];
 };
 
 export const moduleContent: Record<string, ModuleContent> = {
@@ -101,6 +102,14 @@ export const moduleContent: Record<string, ModuleContent> = {
       "Shopify connector status",
       "Sync run timeline",
       "Credential checklist"
+    ],
+    manualSetup: [
+      "Shopify development store and Admin API token",
+      "Google Cloud project plus BigQuery service account",
+      "Google Ads developer token and customer IDs",
+      "Merchant Center ID plus API credentials",
+      "Supplier API base URL and API key",
+      "LLM provider key plus embedding and vector store credentials for RAG"
     ]
   },
   "growth-ads": {
@@ -155,6 +164,9 @@ export const moduleContent: Record<string, ModuleContent> = {
       "Pricing thresholds",
       "Prompt presets",
       "Credential placeholders"
+    ],
+    manualSetup: [
+      "Central env management for Shopify, BigQuery, Ads, Merchant Center, suppliers, and AI providers"
     ]
   }
 };

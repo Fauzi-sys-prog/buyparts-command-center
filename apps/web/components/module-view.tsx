@@ -79,6 +79,25 @@ export function ModuleView({ module }: ModuleViewProps) {
           ))}
         </div>
       </section>
+
+      {module.manualSetup ? (
+        <section className="section-card">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Manual setup</p>
+              <h3>Accounts or credentials we will need later</h3>
+            </div>
+          </div>
+
+          <div className="list-stack">
+            {module.manualSetup.map((item) => (
+              <div key={item} className="list-card">
+                {item}
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }
