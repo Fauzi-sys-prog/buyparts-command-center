@@ -52,6 +52,13 @@ export function AppShell({ children }: PropsWithChildren) {
           </div>
         </div>
 
+        <div className="sidebar-search-shell">
+          <label className="sidebar-search">
+            <span className="sidebar-search-icon" aria-hidden="true" />
+            <input type="search" placeholder="Search analytics" />
+          </label>
+        </div>
+
         <div className="sidebar-scroll">
           <nav className="nav-section-stack">
             {navigationSections.map((section) => {
@@ -93,6 +100,15 @@ export function AppShell({ children }: PropsWithChildren) {
         </div>
 
         <div className="sidebar-footer">
+          <div className="sidebar-operator-mini">
+            <div className="sidebar-operator-avatar" aria-hidden="true">
+              BP
+            </div>
+            <div>
+              <strong>Local Operator</strong>
+              <p>Internal workspace</p>
+            </div>
+          </div>
           <button type="button" className="logout-button">
             Logout
           </button>

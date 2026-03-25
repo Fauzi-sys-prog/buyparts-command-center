@@ -10,6 +10,11 @@ type HomePageProps = {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const resolvedSearchParams = await searchParams;
   const feedback = getActionFeedback(resolvedSearchParams);
+  const range: "24h" | "7d" | "30d" | undefined =
+    typeof resolvedSearchParams.range === "string" &&
+    ["24h", "7d", "30d"].includes(resolvedSearchParams.range)
+      ? (resolvedSearchParams.range as "24h" | "7d" | "30d")
+      : undefined;
   const filters = {
     pricingStatus:
       typeof resolvedSearchParams.pricingStatus === "string"
@@ -23,5 +28,5 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     catalogQ: typeof resolvedSearchParams.catalogQ === "string" ? resolvedSearchParams.catalogQ : undefined
   };
 
-  return <DashboardHome feedback={feedback} filters={filters} />;
+  return <DashboardHome feedback={feedback} filters={filters} range={range} />;
 }
